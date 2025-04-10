@@ -11,7 +11,11 @@ export default function App() {
       {!graphId ? (
         <GraphSelectionPage onSelect={(id) => setGraphId(id)} />
       ) : (
-        <GraphEditor graphId={graphId} />
+        <GraphEditor 
+          graphId={graphId}
+          onBack={() => setGraphId(null)}
+          
+          />
       )}
     </>
   );

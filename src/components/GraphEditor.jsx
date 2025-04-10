@@ -33,71 +33,6 @@ function Node({ data }) {
     </div>
   );
 }
-/* 
-function CircleZone({ zone, onDrag }) {
-  
-    return (
-        <motion.div
-        className="absolute rounded-full border-2 border-dashed border-gray-400 p-2 text-center text-sm text-gray-700"
-        style={{
-            width: zone.radius * 2,
-            height: zone.radius * 2,
-            top: zone.y - zone.radius,
-            left: zone.x - zone.radius,
-            zIndex: 0,
-            backgroundColor: 'rgba(200, 200, 255, 0.2)',
-        }}
-        drag
-        dragMomentum={false}
-        onDragEnd={(event, info) => onDrag(zone.id, info.point)}
-        >
-        </motion.div>
-  );
-}; */
-/* function CircleZone({ zone, onDrag }) {
-    const zoneRef = useRef(null);
-    const [dragging, setDragging] = useState(false);
-  
-    const handleMouseDown = (e) => {
-      setDragging(true);
-      const offsetX = e.clientX - zone.x;
-      const offsetY = e.clientY - zone.y;
-  
-      const handleMouseMove = (moveEvent) => {
-        if (!dragging) return;
-        const newX = moveEvent.clientX - offsetX;
-        const newY = moveEvent.clientY - offsetY;
-        onDrag(zone.id, { x: newX, y: newY });
-      };
-  
-      const handleMouseUp = () => {
-        setDragging(false);
-        window.removeEventListener("mousemove", handleMouseMove);
-        window.removeEventListener("mouseup", handleMouseUp);
-      };
-  
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", handleMouseUp);
-    };
-  
-    return (
-      <div
-        ref={zoneRef}
-        className="absolute rounded-full border-2 border-dashed border-gray-400 p-2 text-center text-sm text-gray-700 cursor-move"
-        style={{
-          width: zone.radius * 2,
-          height: zone.radius * 2,
-          top: zone.y - zone.radius,
-          left: zone.x - zone.radius,
-          backgroundColor: 'rgba(200, 200, 255, 0.2)',
-          zIndex: 0,
-        }}
-        onMouseDown={handleMouseDown}
-      >
-        {zone.name}
-      </div>
-    );
-  } */
 
 function CircleZone({ data }) {
     const { radius = 100, name = "" } = data;
@@ -117,7 +52,7 @@ function CircleZone({ data }) {
     }
 const nodeTypes = { resizable: Node, zone: CircleZone};
 
-export default function GraphEditor({ graphId }) {
+export default function GraphEditor({ graphId, onBack}) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [newNode, setNewNode] = useState({ title: "", link: "", image_url: "" });
@@ -177,7 +112,6 @@ export default function GraphEditor({ graphId }) {
   
     setNodes((nodes) => [zoneNode, ...nodes]);
     setNewZone({ name: "", radius: "" });
-    //handleSaveGraph();
   };
 
 
@@ -194,7 +128,6 @@ export default function GraphEditor({ graphId }) {
           type: 'default', // explicitly set
           style: { stroke: "#A30A00", zIndex: 1000 },
         };
-        //handleSaveGraph();
         // Prevent duplicate edges explicitly
         if (eds.some(edge => edge.id === newEdge.id)) return eds;
   
@@ -223,7 +156,6 @@ export default function GraphEditor({ graphId }) {
     };
     setNodes((nds) => [...nds, node]);
     setNewNode({ title: "", link: "", image_url: "" });
-    //handleSaveGraph();
   };
 
   const handleNodeClick = (event, node) => {
@@ -264,7 +196,7 @@ export default function GraphEditor({ graphId }) {
     }
   }, [nodes, edges, graphId]);
 
-  const debouncedSave = useMemo(() => debounce(handleSaveGraph, 3000), [handleSaveGraph]);
+  const debouncedSave = useMemo(() => debounce(handleSaveGraph, 1000), [handleSaveGraph]);
 
   useEffect(() => {
     // This function runs every time nodes or edges change
@@ -311,7 +243,10 @@ export default function GraphEditor({ graphId }) {
         </button>
 
 
-        <p className="text-3xl text-black absolute top-1/100 left-47/100 px-2 py-1 z-10">{name}</p>
+        <button className="text-3xl text-black absolute top-1/100 left-47/100 px-2 py-1 z-10"
+                onClick={onBack}>
+          {name}
+        </button>
 
         
         <input
