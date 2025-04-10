@@ -110,7 +110,7 @@ function CircleZone({ data }) {
             backgroundColor: 'rgba(200, 200, 255, 0.2)',
         }}
         >
-        <p className="text-3xl" >{name}</p>
+        <p className="text-5xl" >{name}</p>
         </div>
     );
     }
@@ -121,6 +121,7 @@ export default function GraphEditor({ graphId }) {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [newNode, setNewNode] = useState({ title: "", link: "", image_url: "" });
   const [selectedNodeId, setSelectedNodeId] = useState(null);
+  const [name, setName] = useState(null);
 
   const [zones, setZones] = useState([]);
   const [newZone, setNewZone] = useState({ name:"", radius: ""});
@@ -130,6 +131,7 @@ export default function GraphEditor({ graphId }) {
     axios.get('http://localhost:8000/graph/'+graphId)
     .then(res => {
       const graph = res.data;
+      setName(graph.name);
       console.log("Loaded graph nodes:", graph.nodes);
       setNodes(graph.nodes.map(node => ({
         id: node.id,
@@ -323,62 +325,69 @@ export default function GraphEditor({ graphId }) {
   return (
     <ReactFlowProvider>
       <div style={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: 10, left: 10, zIndex: 10 }} className="p-2 rounded">
-          <input
-            className="border p-1 my-1 w-1/5"
-            placeholder="Title"
-            value={newNode.title}
-            onChange={(e) => setNewNode({ ...newNode, title: e.target.value })}
-          />
-          <input
-            className="border p-1 my-1 w-3/20"
-            placeholder="Link"
-            value={newNode.link}
-            onChange={(e) => setNewNode({ ...newNode, link: e.target.value })}
-          />
-          <input
-            className="border p-1 my-1 w-3/20"
-            placeholder="Image URL"
-            value={newNode.image_url}
-            onChange={(e) => setNewNode({ ...newNode, image_url: e.target.value })}
-          />
-          <button
-            className="bg-blue-500 text-black px-2 py-1 mt-1 mx-2"
-            onClick={handleAddNode}
+        {/* Title Input */}
+        <input
+          className="absolute top-1/50 left-1/100 p-1 w-1/10 z-10"
+          placeholder="Title"
+          value={newNode.title}
+          onChange={(e) => setNewNode({ ...newNode, title: e.target.value })}
+        />
+
+        {/* Link Input */}
+        <input
+          className="absolute top-1/50 left-12/100 p-1 w-1/10 z-10"
+          placeholder="Link"
+          value={newNode.link}
+          onChange={(e) => setNewNode({ ...newNode, link: e.target.value })}
+        />
+
+        {/* Image URL Input */}
+        <input
+          className="absolute top-1/50 left-23/100 p-1 w-1/10 z-10"
+          placeholder="Image URL"
+          value={newNode.image_url}
+          onChange={(e) => setNewNode({ ...newNode, image_url: e.target.value })}
+        />
+
+        {/* Add Node Button */}
+        <button
+          className="absolute top-1/100 left-33/100 bg-blue-500 text-black px-2 py-1 w-4/50 z-10"
+          onClick={handleAddNode}
+        >
+          Add Node
+        </button>
+
+
+        <p className="text-3xl text-black absolute top-1/50 left-47/100 px-2 py-1 z-10">{name}</p>
+
+        
+        <input
+            className="absolute top-1/50 right-29/100 text-black px-2 py-1 w-1/10 z-10"
+            placeholder="Zone Name"
+            value={newZone.name}
+            onChange={(e) => setNewZone({ ...newZone, name: e.target.value })}
+        />
+        <input
+            type="number"
+            className="absolute top-1/50 right-20/100 text-black px-2 py-1 w-3/40 z-10"
+            placeholder="Radius"
+            value={newZone.radius}
+            onChange={(e) => setNewZone({ ...newZone, radius: e.target.value })}
+        />
+        <button
+            onClick={handleAddZone}
+            className="absolute top-1/100 right-11/100 text-black px-2 py-1 w-4/50 z-10"
+            >
+            Add Zone
+        </button>
+
+        <button
+            className="absolute top-1/100 right-1/100 text-black px-2 py-1 w-1/10 z-10"
+            onClick={handleSaveGraph}
           >
-            Add Node
-          </button>
+            Save Graph
+        </button>
 
-        </div>
-
-        <div style={{ position: "absolute", top: 10, right: 10, zIndex: 10 }} className="p-2 rounded">
-            <input
-                className="border p-1 my-1"
-                placeholder="Zone Name"
-                value={newZone.name}
-                onChange={(e) => setNewZone({ ...newZone, name: e.target.value })}
-            />
-            <input
-                type="number"
-                className="border p-1 my-1 w-3/20"
-                placeholder="Radius"
-                value={newZone.radius}
-                onChange={(e) => setNewZone({ ...newZone, radius: e.target.value })}
-            />
-            <button
-                onClick={handleAddZone}
-                className="bg-blue-500 text-black px-2 py-1 mt-1 mx-2"
-                >
-                Add Zone
-            </button>
-
-            <button
-  className="bg-green-500 text-black px-2 py-1 mt-1"
-  onClick={handleSaveGraph}
->
-  Save Graph
-</button>
-        </div>
 
         <div style={{ width: "100%", height: "100%" }}>
 
