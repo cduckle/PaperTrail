@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useMemo, useRef } from "react";
+import { debounce } from "lodash";
 import ReactFlow, {
   addEdge,
   MiniMap,
@@ -122,6 +123,8 @@ export default function GraphEditor({ graphId }) {
   const [newNode, setNewNode] = useState({ title: "", link: "", image_url: "" });
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [name, setName] = useState(null);
+  const [lastSaved, setLastSaved] = useState(null);
+
 
   const [zones, setZones] = useState([]);
   const [newZone, setNewZone] = useState({ name:"", radius: ""});
@@ -148,17 +151,7 @@ export default function GraphEditor({ graphId }) {
         }))
       );
 
-/*       setEdges(
-        graph.nodes.flatMap(node =>
-          node.connections.map(conn => ({
-            id: `${node.id}-${conn}`,
-            source: node.id,
-            target: conn,
-            animated: true,
-            style: { stroke: "#222" },
-          }))
-        )
-      ); */
+
     }).catch((err) => {
         console.error("Error loading graph:", err.response?.data || err.message);
       });
@@ -184,30 +177,9 @@ export default function GraphEditor({ graphId }) {
   
     setNodes((nodes) => [zoneNode, ...nodes]);
     setNewZone({ name: "", radius: "" });
+    //handleSaveGraph();
   };
 
-  /* const handleAddZone = () => {
-    if (!newZone.name && !newZone.radius) return;
-    const id = crypto.randomUUID();
-    const zone = {
-      id,
-      x: Math.random() * 400,
-      y: Math.random() * 400,
-      type: 'circleZone',
-      radius: newZone.radius,
-      name: newZone.name,
-    };
-    setZones((zones) => [...zones, zone]);
-    setNewZone({name: "", radius:""});
-  }; */
-
-  const handleZoneDrag = (id, newPosition) => {
-    setZones((zones) =>
-      zones.map((zone) =>
-        zone.id === id ? { ...zone, x: newPosition.x, y: newPosition.y } : zone
-      )
-    );
-  };
 
   const onConnect = useCallback(
     (params) => {
@@ -222,7 +194,7 @@ export default function GraphEditor({ graphId }) {
           type: 'default', // explicitly set
           style: { stroke: "#A30A00", zIndex: 1000 },
         };
-  
+        //handleSaveGraph();
         // Prevent duplicate edges explicitly
         if (eds.some(edge => edge.id === newEdge.id)) return eds;
   
@@ -231,31 +203,6 @@ export default function GraphEditor({ graphId }) {
     },
     [setEdges]
   );
-
- /*  const onConnect = useCallback(
- 
-    (params) => {
-      console.log("Connect event:", params);
-
-
-      setEdges((eds) => {
-        const exists = eds.some(
-          (e) =>
-            (e.source === params.source && e.target === params.target) ||
-            (e.source === params.target && e.target === params.source)
-        );
-        console.log("eds", eds);
-        console.log("exists", exists);
-
-
-        if (exists) return eds;
-        return addEdge({ ...params, animated: true, style: { stroke: "#222" }, id: crypto.randomUUID(),  }, eds);
-      });
-
-    },
-    [setEdges]
-    
-  ); */
 
   const handleAddNode = () => {
     if (!newNode.title && !newNode.link && !newNode.image_url) return;
@@ -276,6 +223,7 @@ export default function GraphEditor({ graphId }) {
     };
     setNodes((nds) => [...nds, node]);
     setNewNode({ title: "", link: "", image_url: "" });
+    //handleSaveGraph();
   };
 
   const handleNodeClick = (event, node) => {
@@ -287,14 +235,7 @@ export default function GraphEditor({ graphId }) {
   };
 
 
-/*   const handleDeleteNode = () => {
-    if (!selectedNodeId) return;
-    setNodes((nds) => nds.filter((n) => n.id !== selectedNodeId));
-    setEdges((eds) => eds.filter((e) => e.source !== selectedNodeId && e.target !== selectedNodeId));
-    setSelectedNodeId(null);
-  }; */
-
-  const handleSaveGraph = async () => {
+  const handleSaveGraph = useCallback(async () => {
     const graphData = {
 
       nodes: nodes.map(({ id, type, data, position, style }) => ({
@@ -316,11 +257,23 @@ export default function GraphEditor({ graphId }) {
       await axios.put(`http://localhost:8000/graph/${graphId}`, graphData
 
       );
-      alert("Graph updated!");
+      //alert("Graph updated!");
+      setLastSaved(new Date());
     } catch (err) {
       console.error("Failed to update graph:", err.response?.data || err.message);
     }
-  };
+  }, [nodes, edges, graphId]);
+
+  const debouncedSave = useMemo(() => debounce(handleSaveGraph, 3000), [handleSaveGraph]);
+
+  useEffect(() => {
+    // This function runs every time nodes or edges change
+    console.log("Nodes or edges changed");
+    debouncedSave();
+    return () => {
+      debouncedSave.cancel();
+    };
+  }, [nodes, edges]);
 
   return (
     <ReactFlowProvider>
@@ -358,36 +311,34 @@ export default function GraphEditor({ graphId }) {
         </button>
 
 
-        <p className="text-3xl text-black absolute top-1/50 left-47/100 px-2 py-1 z-10">{name}</p>
+        <p className="text-3xl text-black absolute top-1/100 left-47/100 px-2 py-1 z-10">{name}</p>
 
         
         <input
-            className="absolute top-1/50 right-29/100 text-black px-2 py-1 w-1/10 z-10"
+            className="absolute top-1/50 right-19/100 text-black px-2 py-1 w-1/10 z-10"
             placeholder="Zone Name"
             value={newZone.name}
             onChange={(e) => setNewZone({ ...newZone, name: e.target.value })}
         />
         <input
             type="number"
-            className="absolute top-1/50 right-20/100 text-black px-2 py-1 w-3/40 z-10"
+            className="absolute top-1/50 right-10/100 text-black px-2 py-1 w-3/40 z-10"
             placeholder="Radius"
             value={newZone.radius}
             onChange={(e) => setNewZone({ ...newZone, radius: e.target.value })}
         />
         <button
             onClick={handleAddZone}
-            className="absolute top-1/100 right-11/100 text-black px-2 py-1 w-4/50 z-10"
+            className="absolute top-1/100 right-1/100 text-black px-2 py-1 w-4/50 z-10"
             >
             Add Zone
         </button>
 
-        <button
-            className="absolute top-1/100 right-1/100 text-black px-2 py-1 w-1/10 z-10"
-            onClick={handleSaveGraph}
-          >
-            Save Graph
-        </button>
-
+        {lastSaved && (
+          <p className="absolute text-l top-6/100 right-1/100 text-gray-500 mt-2 z-10">
+            Last saved at {lastSaved.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'})}
+          </p>
+        )}
 
         <div style={{ width: "100%", height: "100%" }}>
 
